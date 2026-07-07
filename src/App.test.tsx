@@ -34,7 +34,8 @@ describe("Sprint Tracker MVP front", () => {
       .getAllByRole("row")
       .find((row) => within(row).queryByText("Личный кабинет клиента"));
     expect(firstEpicRow).toBeDefined();
-    expect(within(firstEpicRow as HTMLElement).getByLabelText("Тип задачи эпика Личный кабинет клиента")).toHaveValue("Новый функционал");
+    expect(within(firstEpicRow as HTMLElement).queryByLabelText("Тип задачи эпика Личный кабинет клиента")).not.toBeInTheDocument();
+    expect((firstEpicRow as HTMLElement).querySelector(".computed-pill")).toHaveTextContent("Смешанный");
     expect(within(firstEpicRow as HTMLElement).queryByText("Готов дизайн API")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Статус эпика Личный кабинет клиента")).toHaveValue("В реализации");
     expect(screen.getByText("4 из 6")).toBeInTheDocument();
@@ -93,21 +94,23 @@ describe("Sprint Tracker MVP front", () => {
 
     const product = screen.getByLabelText("Продукт эпика Личный кабинет клиента");
     const stream = screen.getByLabelText("Стрим эпика Личный кабинет клиента");
-    const taskType = screen.getByLabelText("Тип задачи эпика Личный кабинет клиента");
     const performersSelect = screen.getByLabelText("Исполнители эпика Личный кабинет клиента");
+    const epicTable = screen.getByRole("table", { name: "Эпики backlog" });
+    const firstEpicRow = within(epicTable)
+      .getAllByRole("row")
+      .find((row) => within(row).queryByText("Личный кабинет клиента"));
 
     expect(product).toHaveClass("pill-select");
     expect(stream).toHaveClass("pill-select");
-    expect(taskType).toHaveClass("pill-select");
     expect(performersSelect).toHaveClass("pill-select");
+    expect(screen.queryByLabelText("Тип задачи эпика Личный кабинет клиента")).not.toBeInTheDocument();
+    expect((firstEpicRow as HTMLElement).querySelector(".computed-pill")).toHaveTextContent("Смешанный");
 
     await user.selectOptions(product, "Сайт");
     await user.selectOptions(stream, "Инженерный");
-    await user.selectOptions(taskType, "Исследование");
 
     expect(product).toHaveValue("Сайт");
     expect(stream).toHaveValue("Инженерный");
-    expect(taskType).toHaveValue("Исследование");
     expect(performersSelect).toHaveTextContent("Вася, Саша, Петя");
   });
 
@@ -162,7 +165,7 @@ describe("Sprint Tracker MVP front", () => {
     await user.click(screen.getByRole("button", { name: "Фильтры" }));
 
     const filters = screen.getByRole("dialog", { name: "Фильтры backlog" });
-    expect(within(filters).getByLabelText("Продукт")).toBeInTheDocument();
+
     expect(within(filters).getByLabelText("Стрим")).toBeInTheDocument();
     expect(within(filters).getByLabelText("Статус")).toBeInTheDocument();
     expect(within(filters).getByLabelText("Исполнитель")).toBeInTheDocument();

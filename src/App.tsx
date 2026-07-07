@@ -339,12 +339,6 @@ function App() {
     );
   };
 
-  const updateEpicTaskType = (epicId: string, taskType: TaskTypeName) => {
-    setEpicList((current) =>
-      current.map((epic) => (epic.id === epicId ? { ...epic, taskType } : epic)),
-    );
-  };
-
   const updateEpicPerformers = (epicId: string, performersValue: string) => {
     const performersList = performersValue.split(",").map((name) => name.trim()).filter(Boolean);
     setEpicList((current) =>
@@ -377,8 +371,8 @@ function App() {
     updateBacklogTask(epicId, taskId, { taskType });
   };
 
-  const updateBacklogTaskPerformer = (epicId: string, taskId: string, performer: string) => {
-    updateBacklogTask(epicId, taskId, { owner: performer, performers: [performer] });
+  const updateBacklogTaskPerformer = (epicId: string, taskId: string, performersList: string[]) => {
+    updateBacklogTask(epicId, taskId, { performers: performersList, owner: performersList[0] || undefined });
   };
 
   const updateBacklogTask = (epicId: string, taskId: string, changes: Partial<SprintTask>) => {
@@ -467,7 +461,6 @@ function App() {
         status,
         product,
         stream,
-        taskType: taskTypeList[0]?.name ?? "Новый функционал",
         performers: [],
         tasks: [],
       },
@@ -663,7 +656,6 @@ function App() {
             onEpicProductChange={updateEpicProduct}
             onEpicStatusChange={updateEpicStatus}
             onEpicStreamChange={updateEpicStream}
-            onEpicTaskTypeChange={updateEpicTaskType}
             onSearchChange={setSearchTerm}
             onStartDrag={startDrag}
             onTaskPerformerChange={updateBacklogTaskPerformer}
@@ -873,7 +865,6 @@ function GlobalBacklog({
   onEpicProductChange,
   onEpicStatusChange,
   onEpicStreamChange,
-  onEpicTaskTypeChange,
   onSearchChange,
   onStartDrag,
   onTaskPerformerChange,
@@ -913,10 +904,9 @@ function GlobalBacklog({
   onEpicProductChange: (epicId: string, product: string) => void;
   onEpicStatusChange: (epicId: string, status: StatusName) => void;
   onEpicStreamChange: (epicId: string, stream: string) => void;
-  onEpicTaskTypeChange: (epicId: string, taskType: TaskTypeName) => void;
   onSearchChange: (value: string) => void;
   onStartDrag: (event: DragEvent<HTMLElement>, payload: DragPayload) => void;
-  onTaskPerformerChange: (epicId: string, taskId: string, performer: string) => void;
+  onTaskPerformerChange: (epicId: string, taskId: string, performers: string[]) => void;
   onTaskProductChange: (epicId: string, taskId: string, product: string) => void;
   onTaskStatusChange: (epicId: string, taskId: string, status: StatusName) => void;
   onTaskStreamChange: (epicId: string, taskId: string, stream: string) => void;
@@ -1005,7 +995,6 @@ function GlobalBacklog({
                 onEpicProductChange={onEpicProductChange}
                 onEpicStatusChange={onEpicStatusChange}
                 onEpicStreamChange={onEpicStreamChange}
-                onEpicTaskTypeChange={onEpicTaskTypeChange}
                 onStartDrag={onStartDrag}
                 onTaskPerformerChange={onTaskPerformerChange}
                 onTaskProductChange={onTaskProductChange}
@@ -1065,7 +1054,6 @@ function FilterPopover({
   return (
     <div className="filter-popover" role="dialog" aria-label="Фильтры backlog">
       <div className="filter-group">
-        <span className="filter-group-label">Продукт</span>
         <PillSelect
           ariaLabel="Продукт"
           onChange={(val) => setProductFilter(val === "Все продукты" ? "all" : val)}
@@ -1074,7 +1062,6 @@ function FilterPopover({
         />
       </div>
       <div className="filter-group">
-        <span className="filter-group-label">Стрим</span>
         <PillSelect
           ariaLabel="Стрим"
           onChange={(val) => setStreamFilter(val === "Все стримы" ? "all" : val)}
@@ -1083,21 +1070,19 @@ function FilterPopover({
         />
       </div>
       <div className="filter-group">
-        <span className="filter-group-label">Статус</span>
         <PillSelect
           ariaLabel="Статус"
-          onChange={(val) => setStatusFilter(val === "Все" ? "all" : val)}
-          options={["Все", ...statusList.map((s) => s.name)]}
-          value={statusFilter === "all" ? "Все" : statusFilter}
+          onChange={(val) => setStatusFilter(val === "Все статусы" ? "all" : val)}
+          options={["Все статусы", ...statusList.map((s) => s.name)]}
+          value={statusFilter === "all" ? "Все статусы" : statusFilter}
         />
       </div>
       <div className="filter-group">
-        <span className="filter-group-label">Исполнитель</span>
         <PillSelect
           ariaLabel="Исполнитель"
-          onChange={(val) => setPerformerFilter(val === "Все" ? "all" : val)}
-          options={["Все", ...performerList.map((p) => p.name)]}
-          value={performerFilter === "all" ? "Все" : performerFilter}
+          onChange={(val) => setPerformerFilter(val === "Все исполнители" ? "all" : val)}
+          options={["Все исполнители", ...performerList.map((p) => p.name)]}
+          value={performerFilter === "all" ? "Все исполнители" : performerFilter}
         />
       </div>
     </div>
@@ -1123,6 +1108,21 @@ function getEpicSummary(epic: Epic): {
   };
 }
 
+function getEpicTaskTypeSummary(epic: Epic): { label: string; tone: string } {
+  const taskTypesInEpic = Array.from(new Set(epic.tasks.map((task) => task.taskType)));
+
+  if (taskTypesInEpic.length === 0) {
+    return { label: "—", tone: "neutral" };
+  }
+
+  if (taskTypesInEpic.length === 1) {
+    const taskType = taskTypesInEpic[0];
+    return { label: taskType, tone: typeTone[taskType] };
+  }
+
+  return { label: "Смешанный", tone: "neutral" };
+}
+
 function EpicCard({
   epic,
   expanded,
@@ -1134,7 +1134,6 @@ function EpicCard({
   onEpicProductChange,
   onEpicStatusChange,
   onEpicStreamChange,
-  onEpicTaskTypeChange,
   onStartDrag,
   onTaskPerformerChange,
   onTaskProductChange,
@@ -1166,9 +1165,8 @@ function EpicCard({
   onEpicProductChange: (epicId: string, product: string) => void;
   onEpicStatusChange: (epicId: string, status: StatusName) => void;
   onEpicStreamChange: (epicId: string, stream: string) => void;
-  onEpicTaskTypeChange: (epicId: string, taskType: TaskTypeName) => void;
   onStartDrag: (event: DragEvent<HTMLElement>, payload: DragPayload) => void;
-  onTaskPerformerChange: (epicId: string, taskId: string, performer: string) => void;
+  onTaskPerformerChange: (epicId: string, taskId: string, performers: string[]) => void;
   onTaskProductChange: (epicId: string, taskId: string, product: string) => void;
   onTaskStatusChange: (epicId: string, taskId: string, status: StatusName) => void;
   onTaskStreamChange: (epicId: string, taskId: string, stream: string) => void;
@@ -1190,6 +1188,7 @@ function EpicCard({
 }) {
   const progress = getEpicProgress(epic);
   const summary = getEpicSummary(epic);
+  const taskTypeSummary = getEpicTaskTypeSummary(epic);
 
   return (
     <article
@@ -1252,25 +1251,14 @@ function EpicCard({
           />
         </div>
         <div className="epic-cell" role="cell">
-          <PillSelect
-            ariaLabel={`Тип задачи эпика ${epic.title}`}
-            onChange={(taskType) => onEpicTaskTypeChange(epic.id, taskType as TaskTypeName)}
-            options={taskTypeList.map((type) => type.name)}
-            tone={typeTone[epic.taskType]}
-            value={epic.taskType}
-          />
+          <span className={`computed-pill ${taskTypeSummary.tone}`}>{taskTypeSummary.label}</span>
         </div>
         <div className="epic-cell" role="cell">
           <div
             aria-label={`Исполнители эпика ${epic.title}`}
-            className="pill-select wide neutral"
+            className="pill-select wide neutral performers-pill"
             style={{
               pointerEvents: "none",
-              backgroundImage: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "32px",
             }}
           >
             {summary.performers}
@@ -1286,7 +1274,7 @@ function EpicCard({
             <Plus size={18} />
           </button>
           <button
-            className="icon-button"
+            className="icon-button dots-menu"
             aria-label="Меню эпика"
             onClick={(e) => {
               e.stopPropagation();
@@ -1327,7 +1315,7 @@ function EpicCard({
                 mode="backlog"
                 onDropTask={(event) => onDropTask(event, epic.id, task.id)}
                 onContextMenu={(x, y, taskId) => onTaskContextMenu(x, y, epic.id, taskId)}
-                onPerformerChange={(taskId, performer) => onTaskPerformerChange(epic.id, taskId, performer)}
+                onPerformerChange={(taskId, performers) => onTaskPerformerChange(epic.id, taskId, performers)}
                 onProductChange={(taskId, product) => onTaskProductChange(epic.id, taskId, product)}
                 onStartDrag={onStartDrag}
                 onStatusChange={(taskId, status) => onTaskStatusChange(epic.id, taskId, status)}
@@ -1373,7 +1361,7 @@ function TaskRow({
   onActualDateChange?: (taskId: string, actualDate: string) => void;
   onDropTask: (event: DragEvent<HTMLElement>) => void;
   onContextMenu?: (x: number, y: number, taskId: string) => void;
-  onPerformerChange?: (taskId: string, performer: string) => void;
+  onPerformerChange?: (taskId: string, performers: string[]) => void;
   onProductChange?: (taskId: string, product: string) => void;
   onStartDrag: (event: DragEvent<HTMLElement>, payload: DragPayload) => void;
   onStatusChange?: (taskId: string, status: StatusName) => void;
@@ -1422,18 +1410,6 @@ function TaskRow({
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
           <strong>{task.title}</strong>
           {mode === "sprint" && <small>{task.epicTitle}</small>}
-          {mode === "backlog" && task.comment && (
-            <span style={{ fontSize: "11px", color: "#667085", marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
-              <span>💬</span>
-              <span>{task.comment}</span>
-            </span>
-          )}
-          {mode === "backlog" && task.result && (
-            <span style={{ fontSize: "11px", color: "#2563eb", marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
-              <span>🎯</span>
-              <span>{task.result}</span>
-            </span>
-          )}
         </div>
       </div>
       {mode === "backlog" ? (
@@ -1474,19 +1450,19 @@ function TaskRow({
         <TypeChip type={task.taskType} />
       )}
       {mode === "backlog" ? (
-        <PillSelect
+        <MultiPillSelect
           ariaLabel={`Исполнитель задачи ${task.title}`}
-          onChange={(performer) => onPerformerChange?.(task.id, performer)}
+          onChange={(performers) => onPerformerChange?.(task.id, performers)}
           options={performerList.map((performer) => performer.name)}
-          value={task.owner ?? task.performers[0] ?? (performerList[0]?.name || "Не выбран")}
+          value={task.performers || []}
         />
       ) : (
-        <PerformerCell name={task.owner ?? task.performers[0]} />
+        <PerformerCell name={task.performers && task.performers.length > 0 ? task.performers.join(", ") : "Не выбран"} />
       )}
       {mode === "sprint" && <span className="date-cell">{formatDate(task.plannedDate)}</span>}
       {mode === "backlog" && (
         <button
-          className="icon-button"
+          className="icon-button dots-menu"
           aria-label={`Меню задачи ${task.title}`}
           onClick={(e) => {
             e.stopPropagation();
@@ -2617,6 +2593,127 @@ function PillSelect({
   );
 }
 
+function MultiPillSelect({
+  ariaLabel,
+  onChange,
+  options,
+  value,
+  wide = false,
+  name,
+}: {
+  ariaLabel: string;
+  onChange: (value: string[]) => void;
+  options: string[];
+  value: string[];
+  wide?: boolean;
+  name?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  const displayValue = value && value.length > 0 ? value.join(", ") : "Не выбран";
+
+  const handleToggle = (opt: string) => {
+    const currentValue = value || [];
+    if (currentValue.includes(opt)) {
+      onChange(currentValue.filter((v) => v !== opt));
+    } else {
+      onChange([...currentValue, opt]);
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={`pill-select-container ${isOpen ? "active-dropdown" : ""}`}
+      style={{ position: "relative", display: "inline-block", justifySelf: "center" }}
+    >
+      <button
+        type="button"
+        className={`pill-select neutral ${wide ? "wide" : ""}`}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ cursor: "pointer", border: 0 }}
+      >
+        {displayValue}
+      </button>
+
+      {isOpen && (
+        <ul
+          role="listbox"
+          className="custom-select-dropdown"
+          style={{ padding: "4px 0", maxHeight: "200px", overflowY: "auto" }}
+        >
+          {options.map((opt) => {
+            const isSelected = (value || []).includes(opt);
+            return (
+              <li
+                key={opt}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => handleToggle(opt)}
+                className={`custom-select-option ${isSelected ? "selected" : ""}`}
+                style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  readOnly
+                  style={{ pointerEvents: "none" }}
+                />
+                <span>{opt}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <select
+        name={name}
+        aria-label={ariaLabel}
+        className={`pill-select neutral ${wide ? "wide" : ""}`}
+        value={displayValue}
+        onChange={(event) => {
+          const val = event.target.value;
+          if (val === "Не выбран") {
+            onChange([]);
+          } else {
+            onChange([val]);
+          }
+        }}
+        style={{
+          position: "absolute",
+          opacity: 0,
+          pointerEvents: "none",
+          width: "100%",
+          height: "100%",
+          top: 0,
+          left: 0,
+        }}
+      >
+        <option value={displayValue}>{displayValue}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+        <option value="Не выбран">Не выбран</option>
+      </select>
+    </div>
+  );
+}
+
+
 function TypeChip({ type }: { type: TaskTypeName }) {
   return <span className={`chip soft ${typeTone[type]}`}>{type}</span>;
 }
@@ -2767,7 +2864,7 @@ function EditTaskDialog({
   const [product, setProduct] = useState(task.product);
   const [stream, setStream] = useState(task.stream);
   const [taskType, setTaskType] = useState<TaskTypeName>(task.taskType);
-  const [owner, setOwner] = useState(task.owner ?? task.performers[0] ?? "");
+  const [taskPerformers, setTaskPerformers] = useState<string[]>(task.performers || []);
   const [comment, setComment] = useState(task.comment ?? "");
   const [result, setResult] = useState(task.result ?? "");
 
@@ -2780,8 +2877,8 @@ function EditTaskDialog({
       product,
       stream,
       taskType,
-      owner: owner === "Не выбран" || !owner ? undefined : owner,
-      performers: owner && owner !== "Не выбран" ? [owner] : [],
+      owner: taskPerformers[0] || undefined,
+      performers: taskPerformers,
       comment: comment.trim(),
       result: result.trim(),
     });
@@ -2845,12 +2942,12 @@ function EditTaskDialog({
         </div>
         <div className="form-grid">
           <label className="field">
-            <span>Исполнитель</span>
-            <PillSelect
-              ariaLabel="Исполнитель"
-              onChange={(val) => setOwner(val === "Не выбран" ? "" : val)}
-              options={["Не выбран", ...performerList.map((p) => p.name)]}
-              value={owner || "Не выбран"}
+            <span>Исполнители</span>
+            <MultiPillSelect
+              ariaLabel="Исполнители"
+              onChange={(val) => setTaskPerformers(val)}
+              options={performerList.map((p) => p.name)}
+              value={taskPerformers}
               wide
             />
           </label>

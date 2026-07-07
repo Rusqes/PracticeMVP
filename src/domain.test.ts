@@ -68,7 +68,6 @@ describe("sprint tracker domain helpers", () => {
       status: "В реализации",
       product: "Проект 1",
       stream: "Продуктовый",
-      taskType: "Новый функционал",
       performers: ["Вася", "Петя", "Саша"],
       tasks,
     };
@@ -100,7 +99,6 @@ describe("sprint tracker domain helpers", () => {
       status: "В реализации",
       product: "Проект 1",
       stream: "Продуктовый",
-      taskType: "Новый функционал",
       performers: ["Вася"],
       tasks,
     };

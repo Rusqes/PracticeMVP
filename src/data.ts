@@ -49,7 +49,6 @@ export const epics: Epic[] = [
     status: "В реализации",
     product: "Проект 1",
     stream: "Продуктовый",
-    taskType: "Новый функционал",
     performers: ["Вася", "Петя", "Саша"],
     tasks: [
       {
@@ -143,7 +142,6 @@ export const epics: Epic[] = [
     status: "Запланировано",
     product: "Сайт",
     stream: "Смешанный",
-    taskType: "Улучшение",
     performers: ["Марина", "Саша"],
     tasks: [
       {

@@ -35,7 +35,6 @@ export type Epic = {
   status: StatusName;
   product: string;
   stream: string;
-  taskType: TaskTypeName;
   performers: string[];
   tasks: SprintTask[];
 };
