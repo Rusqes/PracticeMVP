@@ -972,7 +972,7 @@ function GlobalBacklog({
 
         <div className="epic-list-shell" role="table" aria-label="Эпики backlog">
           <div className="epic-list-head" role="row">
-            <span role="columnheader">Название</span>
+            <span role="columnheader">Эпики</span>
             <span role="columnheader">Статус</span>
             <span role="columnheader">Продукт</span>
             <span role="columnheader">Стрим</span>
@@ -1292,7 +1292,7 @@ function EpicCard({
         <div className="task-panel">
           <div className="task-table backlog-task-table" role="table" aria-label={`Задачи эпика ${epic.title}`}>
             <div className="task-row task-head" role="row">
-              <span role="columnheader">Название</span>
+              <span role="columnheader">Задачи</span>
               <span role="columnheader">Статус</span>
               <span role="columnheader">Продукт</span>
               <span role="columnheader">Стрим</span>
@@ -2151,7 +2151,13 @@ function Directories({
         </div>
         <button className="primary-button toolbar-create" onClick={openCreateModal} type="button">
           <Plus size={18} />
-          Добавить элемент
+          {{
+            "Продукты": "Добавить продукт",
+            "Стримы": "Добавить стрим",
+            "Статусы": "Добавить статус",
+            "Типы задач": "Добавить тип задачи",
+            "Исполнители": "Добавить исполнителя",
+          }[tab] || "Добавить элемент"}
         </button>
       </div>
 
