@@ -1504,6 +1504,7 @@ function SprintPlanning({
   onOpenAddTask: (sprintId: string) => void;
   onStartDrag: (event: DragEvent<HTMLElement>, payload: DragPayload) => void;
 }) {
+  const today = new Date().toISOString().split('T')[0];
   return (
     <section className="page">
       <div className="toolbar page-actions" role="toolbar" aria-label="Действия спринтов">
@@ -1517,15 +1518,19 @@ function SprintPlanning({
         <div className="sprint-main">
           <Timeline sprints={sprints} />
           <div className="sprint-board">
-            {sprints.map((sprint) => (
+            {sprints.map((sprint) => {
+              const isActive = sprint.startDate <= today && sprint.endDate >= today;
+              return
               <SprintSection
                 key={sprint.id}
+                sprint={sprint}
                 onActualDateChange={onActualDateChange}
+                isActive={isActive}
                 onDropTask={onDropTask}
                 onOpenAddTask={onOpenAddTask}
                 onStartDrag={onStartDrag}
-                sprint={sprint}
               />
+              );
             ))}
           </div>
         </div>
@@ -1551,12 +1556,14 @@ function Timeline({ sprints }: { sprints: Sprint[] }) {
 
 function SprintSection({
   sprint,
+  isActive,
   onActualDateChange,
   onDropTask,
   onOpenAddTask,
   onStartDrag,
 }: {
   sprint: Sprint;
+  isActive: boolean;
   onActualDateChange: (sprintId: string, taskId: string, actualDate: string) => void;
   onDropTask: (event: DragEvent<HTMLElement>, targetSprintId: string, targetTaskId?: string) => void;
   onOpenAddTask: (sprintId: string) => void;
@@ -1564,7 +1571,7 @@ function SprintSection({
 }) {
   return (
     <article
-      className="sprint-card"
+      className={`sprint-card ${isActive ? "active-sprint" : ""}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => onDropTask(event, sprint.id)}
     >
