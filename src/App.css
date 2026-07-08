@@ -1552,6 +1552,12 @@ h3 {
   justify-self: stretch !important;
 }
 
+.sprint-card.active-sprint {
+  border-color: #2563eb; 
+  box-shadow: 0 0 0 2px #2563eb, 0 10px 30px rgba(37, 99, 235, 0.2);
+  background: #f8faff; 
+}
+
 /* Styling dropdown buttons inside forms to be full width and left-aligned */
 .field .pill-select,
 .form-stack .pill-select {
